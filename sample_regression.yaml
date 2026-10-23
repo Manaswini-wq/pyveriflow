@@ -1,0 +1,87 @@
+# Sample Regression Configuration
+# A complete working config for an AXI4-Lite slave verification
+
+project_name: "axi4_lite_slave_sample"
+max_parallel: 4
+retry_count: 1
+coverage_enable: true
+output_dir: "sample_regression_results"
+
+simulator:
+  tool: "vcs"
+  compile_args:
+    - "-sverilog"
+    - "-ntb_opts uvm-1.2"
+    - "-timescale=1ns/1ps"
+  sim_args:
+    - "+UVM_VERBOSITY=UVM_MEDIUM"
+  uvm_home: "${UVM_HOME}"
+  license_wait: true
+
+tests:
+  - name: "axi4_lite_smoke_test"
+    top_module: "tb_top"
+    plusargs:
+      - "VERBOSITY=UVM_LOW"
+    timeout: 600
+    seeds: [1]
+    priority: 1
+    category: "smoke"
+    dependencies: []
+
+  - name: "axi4_lite_sanity_test"
+    top_module: "tb_top"
+    plusargs:
+      - "VERBOSITY=UVM_LOW"
+    timeout: 1200
+    seeds: [1, 42]
+    priority: 2
+    category: "sanity"
+    dependencies:
+      - "axi4_lite_smoke_test"
+
+  - name: "axi4_lite_directed_test"
+    top_module: "tb_top"
+    plusargs:
+      - "VERBOSITY=UVM_MEDIUM"
+      - "REG_BASE_ADDR=0x0000"
+    timeout: 1800
+    seeds: [1]
+    priority: 3
+    category: "directed"
+    dependencies:
+      - "axi4_lite_sanity_test"
+
+  - name: "axi4_lite_error_test"
+    top_module: "tb_top"
+    plusargs:
+      - "INJECT_ERRORS=1"
+    timeout: 1800
+    seeds: [1, 99]
+    priority: 3
+    category: "directed"
+    dependencies:
+      - "axi4_lite_sanity_test"
+
+  - name: "axi4_lite_random_test"
+    top_module: "tb_top"
+    plusargs:
+      - "NUM_TRANSACTIONS=2000"
+    timeout: 3600
+    seeds: [1, 42, 100]
+    priority: 5
+    category: "random"
+    dependencies:
+      - "axi4_lite_sanity_test"
+
+  - name: "axi4_lite_backpressure_test"
+    top_module: "tb_top"
+    plusargs:
+      - "BACKPRESSURE_EN=1"
+      - "READY_DELAY_MAX=15"
+    timeout: 2400
+    seeds: [1, 77]
+    priority: 5
+    category: "random"
+    dependencies:
+      - "axi4_lite_directed_test"
